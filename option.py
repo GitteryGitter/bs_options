@@ -215,7 +215,7 @@ if __name__ == "__main__":
     plt.title("Maximum at the end")
     plt.grid(alpha = 0.5)
     plt.tight_layout()
-    plt.show()
+    # plt.show()
     plt.savefig("simul_test.pdf")
     print(norm.pdf(0))
 

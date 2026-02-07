@@ -216,6 +216,7 @@ if __name__ == "__main__":
     plt.grid(alpha = 0.5)
     plt.tight_layout()
     plt.show()
+    plt.savefig("simul_test.pdf")
     print(norm.pdf(0))
 
 

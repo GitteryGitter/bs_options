@@ -147,7 +147,6 @@ class Option:
         paths = self.brown_simul(n_simuls=n_simuls, n_steps = n_steps, drift = drift, sigma = sigma)
 
         n_steps = paths.shape[0]
-        print(n_steps)
         rem = np.linspace(M, 1e-10, n_steps)
         rem = np.reshape(rem, (n_steps, 1))
  

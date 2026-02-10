@@ -8,7 +8,7 @@ import os
 class OptionParams:
     under: float # Current price of the underlying (S)
     strike: float # Strike price (K)
-    divident: float # Divident payed out by the underlying asset
+    dividend: float # Dividend payed out by the underlying asset
     maturity: float # Time to maturity in years (T)
     rate: float # Risk-free interest rate (r)
     volatility: float # Volatility (sigma)
@@ -17,27 +17,27 @@ class OptionParams:
 
 
 class Option:
-    def __init__(self, params):
+    def __init__(self, params: OptionParams):
         self.under = params.under
         self.strike = params.strike
-        self.divident = params.divident
+        self.dividend = params.dividend
         self.mat = params.maturity
         self.r = params.rate
         self.vol = params.volatility
         self.call = params.call
         self.name = params.name
 
-    def get_params(self):
-        return self.under, self.strike, self.mat, self.r, self.vol, self.divident
+    def get_params(self) -> tuple:
+        return self.under, self.strike, self.mat, self.r, self.vol, self.dividend
 
 
-    def d1(self):
+    def d1(self) -> float:
         U, S, M, R, V, q = self.get_params()
 
         return (math.log( U / S ) + ( R - q + 0.5 * V ** 2 ) * M ) / ( V * math.sqrt(M))
 
 
-    def delta(self):
+    def delta(self) -> float:
         """
         Computes the change of the option in respondse to the change of the underlying asset.
         """
@@ -50,7 +50,7 @@ class Option:
             return math.exp(-q * M) * ( norm.cdf(d1) - 1 )
 
 
-    def gamma(self):
+    def gamma(self) -> float:
         """"
         Computes the sensitivity of delta with respect to the price of the underlying asset.
         """
@@ -60,14 +60,14 @@ class Option:
         return math.exp(-q * M) * norm.pdf(d1) / ( U * V * math.sqrt(M) )
 
 
-    def vega(self):
+    def vega(self) -> float:
         U, _, M, _, _, q = self.get_params()
         d1 = self.d1()
         
         return U * math.exp(-q * M) * math.sqrt(M) * norm.pdf(d1)
 
 
-    def theta(self):
+    def theta(self) -> float:
         """
         Computes the sensitivity of the price of the option with respect to the change in the time to maturity.
         """
@@ -89,7 +89,7 @@ class Option:
             )
 
 
-    def rho(self):
+    def rho(self) -> float:
         _, S, M, R, V, _ = self.get_params()
         d1 = self.d1()
         d2 = d1 - V * math.sqrt(M)
@@ -100,7 +100,7 @@ class Option:
             return - S * M * math.exp(- R * M) * norm.cdf(-d2)
             
         
-    def price(self):
+    def price(self) -> float:
         """Computes the Black-Scholes option price"""
         U, S, M, R, V, q = self.get_params()
         d1 = self.d1()
@@ -112,7 +112,7 @@ class Option:
             return S * math.exp(-R * M) * norm.cdf(-d2) - U * math.exp(-q * M) * norm.cdf(-d1)
     
 
-    def brown_simul(self, n_simuls=250, n_steps = None, drift = None, sigma = None):
+    def brown_simul(self, n_simuls: int =250, n_steps: int = None, drift: float = None, sigma: float = None) -> np.ndarray:
         """Geometric Brownian Motion simulation engine"""
         U, _, M, R, V, q = self.get_params()
         
@@ -138,7 +138,7 @@ class Option:
         return final
         
                 
-    def price_simul(self, n_simuls=250, n_steps = None, drift = None, sigma = None):
+    def price_simul(self, n_simuls: int = 250, n_steps: int = None, drift: float = None, sigma: float = None) -> np.ndarray:
         """
         COmputes the prices of the option based on the brownian motion simulation.
         """
@@ -164,7 +164,7 @@ class Option:
         return prices
     
 
-    def plot_3d(self, xax = "M", yax = "U"):
+    def plot_3d(self, xax: str = "M", yax: str = "U") -> np.ndarray:
         """
         Returns an array for a 3-dimensional plot of the option price.
         Usage: specify x and y by passing a single char string.
@@ -224,8 +224,15 @@ class Option:
         
         return (X, Y, z)
 
+
+    def implied_volatility(self) -> float:
+        """
+        Computes the implied volatility
+        """
+        pass
+
     
-    def get_info(self):
+    def get_info(self) -> None:
         os.system('cls' if os.name == 'nt' else 'clear')
         op_type = "Call" if self.call else "Put"
         print(f"""
@@ -252,73 +259,55 @@ if __name__ == "__main__":
     parameters = OptionParams(
         under = 278.12,
         strike = 277.50,
-        divident = 0.0037,
+        dividend = 0.0037,
         maturity = 3,
         rate  = 0.0345,
         volatility = 0.2434,
         call = True,
         name = "Apple"
     )
+
     option1 = Option(parameters)
 
     option1.get_info()
-    # paths = option1.brown_simul(drift=0)
-    # print(type(paths))
-    # print(paths.shape)
-
-    # # import code; code.interact(local=locals())
-
-    # print(type(paths))
-    # print(paths.shape)
 
     X, Y, z = option1.plot_3d(xax = "M", yax = "V")
 
-    
     import matplotlib.pyplot as plt
-    fig = plt.figure(figsize=(11, 7))
-    ax = fig.add_subplot(projection="3d")
-
-    surf = ax.plot_surface(
-        X, Y, z,
-        cmap="plasma",
-        antialiased=True
-    )
-
-    ax.plot_wireframe(
-        X, Y, z,
-        rstride=10,
-        cstride=10,
-        color="black",
-        alpha=0.35
-    )
-
-    ax.set_box_aspect((2.5, 2.5, 1))
-
-    ax.set_xlabel("Time to maturity", labelpad=10)
-    ax.set_ylabel("Volatility", labelpad=10)
-    ax.set_zlabel("Price of the option", labelpad=10)
-
-    fig.colorbar(surf, shrink=0.6, aspect=15, pad = 0.12)
-    plt.tight_layout()
-    # plt.savefig('3dplot.pdf')
-
-    plt.show()
+    def make_plot(data, xlab = '', ylab = ''):
+        
+        X, Y, z = data
+        fig = plt.figure(figsize=(11, 7))
+        ax = fig.add_subplot(projection="3d")
+        ax.view_init(elev=25)
 
 
-    # maximum = max(paths[-1, :])
-    # for i in range(250):
-    #     if paths[-1, i] == maximum:
-    #         print(i)
-    #         idx = i
-    # plt.figure(figsize=(10, 7))
-    # plt.subplot(2, 1, 1)
-    # plt.plot(paths, linewidth = 0.2, c = 'grey')
-    # plt.title("All simulations")
-    # plt.grid(alpha = 0.5)
-    # plt.subplot(2, 1, 2)
-    # plt.plot(paths[:, idx], c = 'grey')
-    # plt.title("Maximum at the end")
-    # plt.grid(alpha = 0.5)
-    # plt.tight_layout()
-    # plt.show()
+        surf = ax.plot_surface(
+            X, Y, z,
+            cmap="plasma",
+            antialiased=True
+        )
+        ax.plot_wireframe(
+            X, Y, z,
+            rstride=10,
+            cstride=10,
+            color="black",
+            alpha=0.35
+        )
+        ax.set_box_aspect((2.5, 2.5, 1))
+        
+        ax.set_xlabel(xlab, labelpad=10)
+        ax.set_ylabel(ylab, labelpad=10)
+        ax.set_zlabel("Price of the option", labelpad=10)
+        plt.title('Price of the option depending on ' + xlab + ' and ' + ylab)
+
+        fig.colorbar(surf, shrink=0.6, aspect=15, pad = 0.12)
+        plt.tight_layout()
+
+        plt.show()
+
+    plot_data = option1.plot_3d(xax = "M", yax = "V")
+
+    make_plot(data = plot_data, xlab = "Time to maturity", ylab = "Volatility")
+
 

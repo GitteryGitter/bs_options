@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import math
 from scipy.stats import norm
 import numpy as np
 import os
@@ -34,7 +33,7 @@ class Option:
     def d1(self) -> float:
         U, S, M, R, V, q = self.get_params()
 
-        return (math.log( U / S ) + ( R - q + 0.5 * V ** 2 ) * M ) / ( V * math.sqrt(M))
+        return (np.log( U / S ) + ( R - q + 0.5 * V ** 2 ) * M ) / ( V * np.sqrt(M))
 
 
     def delta(self) -> float:
@@ -44,10 +43,10 @@ class Option:
         _, _, M, _, _, q = self.get_params()
         d1 = self.d1()
 
-        if self.call == True:
-            return math.exp(-q * M) * norm.cdf(d1)      
+        if self.call:
+            return np.exp(-q * M) * norm.cdf(d1)      
         else:
-            return math.exp(-q * M) * ( norm.cdf(d1) - 1 )
+            return np.exp(-q * M) * ( norm.cdf(d1) - 1 )
 
 
     def gamma(self) -> float:
@@ -57,14 +56,14 @@ class Option:
         U, _, M, _, V, q = self.get_params()  
         d1 = self.d1()
 
-        return math.exp(-q * M) * norm.pdf(d1) / ( U * V * math.sqrt(M) )
+        return np.exp(-q * M) * norm.pdf(d1) / ( U * V * np.sqrt(M) )
 
 
     def vega(self) -> float:
         U, _, M, _, _, q = self.get_params()
         d1 = self.d1()
         
-        return U * math.exp(-q * M) * math.sqrt(M) * norm.pdf(d1)
+        return U * np.exp(-q * M) * np.sqrt(M) * norm.pdf(d1)
 
 
     def theta(self) -> float:
@@ -73,43 +72,43 @@ class Option:
         """
         U, S, M, R, V, q = self.get_params()
         d1 = self.d1()
-        d2 = d1 - V * math.sqrt(M)
+        d2 = d1 - V * np.sqrt(M)
 
-        if self.call == True:
+        if self.call:
             return (
-                - ( U * math.exp(-q * M) * norm.pdf(d1) * V ) / ( 2 * math.sqrt(M) ) 
-                + U * q * math.exp(-q * M) * norm.cdf(d1) 
-                - R * S * math.exp( - R * M ) * norm.cdf(d2)   
+                - ( U * np.exp(-q * M) * norm.pdf(d1) * V ) / ( 2 * np.sqrt(M) ) 
+                + U * q * np.exp(-q * M) * norm.cdf(d1) 
+                - R * S * np.exp( - R * M ) * norm.cdf(d2)   
             )
         else:
             return (
-                - ( U * math.exp(-q * M) * norm.pdf(d1) * V ) / ( 2 * math.sqrt(M) ) 
-                - q * U * math.exp(-q * M) * norm.cdf(-d1)
-                + R * S * math.exp(- R * M) * norm.cdf( -d2 )
+                - ( U * np.exp(-q * M) * norm.pdf(d1) * V ) / ( 2 * np.sqrt(M) ) 
+                - q * U * np.exp(-q * M) * norm.cdf(-d1)
+                + R * S * np.exp(- R * M) * norm.cdf( -d2 )
             )
 
 
     def rho(self) -> float:
         _, S, M, R, V, _ = self.get_params()
         d1 = self.d1()
-        d2 = d1 - V * math.sqrt(M)
+        d2 = d1 - V * np.sqrt(M)
 
-        if self.call == True:
-            return S * M * math.exp(- R * M) * norm.cdf(d2)    
+        if self.call:
+            return S * M * np.exp(- R * M) * norm.cdf(d2)    
         else:
-            return - S * M * math.exp(- R * M) * norm.cdf(-d2)
+            return - S * M * np.exp(- R * M) * norm.cdf(-d2)
             
         
     def price(self) -> float:
         """Computes the Black-Scholes option price"""
         U, S, M, R, V, q = self.get_params()
         d1 = self.d1()
-        d2 = d1 - V * math.sqrt(M)
+        d2 = d1 - V * np.sqrt(M)
         
         if self.call:
-            return U * math.exp(-q * M) * norm.cdf(d1) - S * math.exp(-R * M) * norm.cdf(d2)
+            return U * np.exp(-q * M) * norm.cdf(d1) - S * np.exp(-R * M) * norm.cdf(d2)
         else:
-            return S * math.exp(-R * M) * norm.cdf(-d2) - U * math.exp(-q * M) * norm.cdf(-d1)
+            return S * np.exp(-R * M) * norm.cdf(-d2) - U * np.exp(-q * M) * norm.cdf(-d1)
     
 
     def brown_simul(self, n_simuls: int =250, n_steps: int = None, drift: float = None, sigma: float = None) -> np.ndarray:
@@ -164,15 +163,17 @@ class Option:
         return prices
     
 
-    def plot_3d(self, xax: str = "M", yax: str = "U") -> np.ndarray:
+    def plot_3d(self, xax: str = "M", yax: str = "U", zax: str = "price") -> tuple:
         """
         Returns an array for a 3-dimensional plot of the option price.
-        Usage: specify x and y by passing a single char string.
-        Available choices: maturity (M), underlying price (U), strike price (S), volatility (V).
+        Usage: specify xax, yax and zax by passing a single char string.
+        Available choices: maturity (M), underlying price (U), strike price (S), volatility (V) for xax and yax.
+        price, delta, gamma, vega, theta and rho for zax.
         """
         assert xax != yax
         assert xax in ["M", "U", "S", "V"]
         assert yax in ["M", "U", "S", "V"]
+        assert zax in ["price", "delta", "gamma", "vega", "theta", "rho"], "zax has to be one of the following: price, delta, gamma, vega, theta or rho"
         
         U, S, M, R, V, q = self.get_params()
 
@@ -217,11 +218,39 @@ class Option:
         d1 = (np.log( U / S ) + ( R - q + 0.5 * V ** 2 ) * M ) / ( V * np.sqrt(M))
         d2 = d1 - V * np.sqrt(M)
 
-        if self.call:
-            z =  U * np.exp(-q * M) * norm.cdf(d1) - S * np.exp(-R * M) * norm.cdf(d2)
+        if zax == "price":
+            if self.call:
+                z =  U * np.exp(-q * M) * norm.cdf(d1) - S * np.exp(-R * M) * norm.cdf(d2)
+            else:
+                z =  S * np.exp(-R * M) * norm.cdf(-d2) - U * np.exp(-q * M) * norm.cdf(-d1)
+        elif zax == "delta":
+            if self.call:
+                z =  np.exp(-q * M) * norm.cdf(d1)      
+            else:
+                z = np.exp(-q * M) * ( norm.cdf(d1) - 1 )
+        elif zax == "gamma":
+            z = np.exp(-q * M) * norm.pdf(d1) / ( U * V * np.sqrt(M) )
+        elif zax == "vega":
+            z = U * np.exp(-q * M) * np.sqrt(M) * norm.pdf(d1)
+        elif zax == "theta":
+            if self.call:
+                z =  (
+                    - ( U * np.exp(-q * M) * norm.pdf(d1) * V ) / ( 2 * np.sqrt(M) ) 
+                    + U * q * np.exp(-q * M) * norm.cdf(d1) 
+                    - R * S * np.exp( - R * M ) * norm.cdf(d2)   
+                )
+            else:
+                z =  (
+                    - ( U * np.exp(-q * M) * norm.pdf(d1) * V ) / ( 2 * np.sqrt(M) ) 
+                    - q * U * np.exp(-q * M) * norm.cdf(-d1)
+                    + R * S * np.exp(- R * M) * norm.cdf( -d2 )
+                )
         else:
-            z =  S * np.exp(-R * M) * norm.cdf(-d2) - U * np.exp(-q * M) * norm.cdf(-d1)
-        
+            if self.call:
+                z =  S * M * np.exp(- R * M) * norm.cdf(d2)    
+            else:
+                z =  - S * M * np.exp(- R * M) * norm.cdf(-d2)
+
         return (X, Y, z)
 
 
@@ -257,24 +286,22 @@ class Option:
 if __name__ == "__main__":
     
     parameters = OptionParams(
-        under = 278.12,
-        strike = 277.50,
-        dividend = 0.0037,
-        maturity = 3,
+        under = 690.62,
+        strike = 691,
+        dividend = 0.0105,
+        maturity = 1,
         rate  = 0.0345,
-        volatility = 0.2434,
+        volatility = 0.1462,
         call = True,
-        name = "Apple"
+        name = "SP500"
     )
 
     option1 = Option(parameters)
 
     option1.get_info()
 
-    X, Y, z = option1.plot_3d(xax = "M", yax = "V")
-
     import matplotlib.pyplot as plt
-    def make_plot(data, xlab = '', ylab = ''):
+    def make_plot(data, xlab = '', ylab = '', zlab = ''):
         
         X, Y, z = data
         fig = plt.figure(figsize=(11, 7))
@@ -298,16 +325,16 @@ if __name__ == "__main__":
         
         ax.set_xlabel(xlab, labelpad=10)
         ax.set_ylabel(ylab, labelpad=10)
-        ax.set_zlabel("Price of the option", labelpad=10)
-        plt.title('Price of the option depending on ' + xlab + ' and ' + ylab)
+        ax.set_zlabel(zlab, labelpad=10)
+        plt.title(f'{zlab} depending on ' + xlab + ' and ' + ylab)
 
         fig.colorbar(surf, shrink=0.6, aspect=15, pad = 0.12)
         plt.tight_layout()
 
         plt.show()
 
-    plot_data = option1.plot_3d(xax = "M", yax = "V")
+    plot_data = option1.plot_3d(xax = "U", yax = "M", zax="theta")
 
-    make_plot(data = plot_data, xlab = "Time to maturity", ylab = "Volatility")
+    make_plot(data = plot_data, xlab = "Underlying price", ylab = "Strike price", zlab = "Gamma")
 
 

@@ -333,8 +333,8 @@ if __name__ == "__main__":
 
         plt.show()
 
-    plot_data = option1.plot_3d(xax = "U", yax = "M", zax="theta")
+    plot_data = option1.plot_3d(xax = "U", yax = "S", zax="gamma")
 
-    make_plot(data = plot_data, xlab = "Underlying price", ylab = "Strike price", zlab = "Gamma")
+    make_plot(data = plot_data, xlab = "Underlying price", ylab = "Time to maturity", zlab = "Delta")
 
 

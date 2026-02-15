@@ -5,8 +5,8 @@
 #include <time.h>
 #include <math.h>
 
-#define DURATION 4 
-#define EXPLOSION_FRAMES 60
+#define DURATION 4
+#define EXPLOSION_FRAMES 30
 
 typedef struct {
     float x, y;

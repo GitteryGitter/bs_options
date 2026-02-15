@@ -6,8 +6,8 @@
 
 #define WIDTH 80
 #define HEIGHT 30
-#define RUN_TIME_SECONDS 20
-#define WIND -1 
+#define RUN_TIME_SECONDS 5
+#define WIND -1
 
 const char* charset = " .:-=+*#%@";
 const int charset_len = 10;
@@ -28,6 +28,7 @@ int main() {
 
     while (time(NULL) - start_time < RUN_TIME_SECONDS) {
         printf("\033[H"); // Reset cursor to top-left
+        fflush(stdout);
 
         // 1. Heat the bottom (Fuel Source)
         // We apply a slight fade to the source itself so it's not a solid line

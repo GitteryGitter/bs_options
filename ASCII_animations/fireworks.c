@@ -5,9 +5,9 @@
 #include <math.h>
 
 #define WIDTH 120
-#define HEIGHT 40 
+#define HEIGHT 30 
 #define MAX_PARTICLES 3000*3
-#define RUN_TIME_SECONDS 30
+#define RUN_TIME_SECONDS 15
 
 typedef enum { LAUNCH, EXPLODE, TRAIL, INACTIVE } State;
 
@@ -164,6 +164,6 @@ int main() {
     }
 
     reset_color();
-    printf("\033[?25h\033[H\033[JShow Complete.\n");
+    printf("\033[?25h\033[H\033[J\n");
     return 0;
 }

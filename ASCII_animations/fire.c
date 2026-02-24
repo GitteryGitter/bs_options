@@ -27,21 +27,18 @@ int main() {
     hide_cursor();
 
     while (time(NULL) - start_time < RUN_TIME_SECONDS) {
-        printf("\033[H"); // Reset cursor to top-left
+        printf("\033[H"); 
         fflush(stdout);
 
-        // 1. Heat the bottom (Fuel Source)
-        // We apply a slight fade to the source itself so it's not a solid line
         for (int x = 0; x < WIDTH; x++) {
             float dist_from_center = abs(x - WIDTH / 2) / (float)(WIDTH / 2);
-            if (dist_from_center < 0.8) { // Only heat the middle 80%
+            if (dist_from_center < 0.8) { 
                 fire[(HEIGHT - 1) * WIDTH + x] = num_colors - 1;
             } else {
                 fire[(HEIGHT - 1) * WIDTH + x] = 0;
             }
         }
 
-        // 2. Diffusion Logic with WIND and EDGE FADING
         for (int y = 0; y < HEIGHT - 1; y++) {
             for (int x = 0; x < WIDTH; x++) {
                 int sway = (rand() % 3) - 1; 
@@ -53,11 +50,10 @@ int main() {
 
                 int pixel = fire[src_y * WIDTH + src_x];
                 
-                // --- EDGE FADING LOGIC ---
-                // Calculate how close we are to the edge (0.0 = center, 1.0 = edge)
+     
                 float edge_dist = abs(x - WIDTH / 2) / (float)(WIDTH / 2);
                 
-                // Increase decay based on edge distance (makes edges cool faster)
+            
                 int extra_decay = (rand() % 100 < (edge_dist * 100)) ? 1 : 0;
                 int decay = (rand() % 2) + extra_decay; 
 
@@ -65,7 +61,7 @@ int main() {
             }
         }
 
-        // 3. Render Frame
+     
         for (int y = 0; y < HEIGHT; y++) {
             for (int x = 0; x < WIDTH; x++) {
                 int heat = fire[y * WIDTH + x];

@@ -58,7 +58,7 @@ int main() {
                 p[slot].vy = -((float)rand() / RAND_MAX * 0.5 + 1.2); 
                 // Explode between 1/4 and 1/2 height of the screen
                 p[slot].life = 15 + rand() % 10; 
-                p[slot].symbol = '*';
+                p[slot].symbol = 'O';
                 // Varied shell colors - bright colors
                 int shell_colors[] = {226, 220, 214, 208, 202, 196, 201, 165, 129};
                 p[slot].color = shell_colors[rand() % 9];

@@ -28,10 +28,10 @@ void reset_color() { printf("\033[0m"); }
 void draw_success_text(int frame, int neon_color, int grey_blend_color) {
     char* text = "\n                          Success!";
     
-    // Position at top of terminal, before fireworks box
+
     move_cursor(1, 1);
     
-    // Flash between bright and dim every 10 frames
+
     int is_bright = (frame / 10) % 2;
     int color = is_bright ? neon_color : grey_blend_color;
     
@@ -52,46 +52,44 @@ int main() {
     Particle p[MAX_PARTICLES];
     for (int i = 0; i < MAX_PARTICLES; i++) p[i].state = INACTIVE;
 
-    // Draw box border
+
     printf("\033[?25l");
     clear_screen();
     
-    // Choose a random neon color for "Success!" text
-    // Neon color palettes: [bright neon, grey blend]
+ 
     int neon_colors[][2] = {
-        {196, 167},  // Red neon -> desaturated red-grey
-        {46, 65},    // Green neon -> desaturated green-grey
-        {201, 139},  // Pink neon -> desaturated pink-grey
-        {51, 67},    // Cyan neon -> desaturated cyan-grey
-        {226, 185},  // Yellow neon -> desaturated yellow-grey
-        {165, 103}   // Purple neon -> desaturated purple-grey
+        {196, 167},  
+        {46, 65},   
+        {201, 139},  
+        {51, 67},    
+        {226, 185},  
+        {165, 103}   
     };
     
     int color_choice = rand() % 6;
     int neon_color = neon_colors[color_choice][0];
     int grey_blend_color = neon_colors[color_choice][1];
-    
-    // Beautiful color palettes for different firework types
+ 
     int palette_choice = rand() % 3;
     int colors[10];
     
     if (palette_choice == 0) {
-        // Golden/White/Yellow - Classic sparkler
+      
         int temp[] = {231, 230, 229, 228, 227, 226, 220, 214, 208, 202};
         for(int i = 0; i < 10; i++) colors[i] = temp[i];
     } else if (palette_choice == 1) {
-        // Blue/Cyan/White - Ice fire
+      
         int temp[] = {231, 195, 159, 123, 87, 51, 45, 39, 33, 27};
         for(int i = 0; i < 10; i++) colors[i] = temp[i];
     } else {
-        // Red/Pink/White - Rose gold
+   
         int temp[] = {231, 225, 219, 213, 207, 201, 200, 199, 198, 197};
         for(int i = 0; i < 10; i++) colors[i] = temp[i];
     }
 
     char sparkle_symbols[] = {'*', '+', 'x', 'o', '@', '#', '.', ':', ';', '~'};
     
-    // Launch the rocket
+ 
     int shell = find_slot(p);
     p[shell].state = LAUNCH;
     p[shell].x = WIDTH / 2.0;
@@ -108,10 +106,10 @@ int main() {
     while (1) {
         clear_screen();
         
-        // Draw "Success!" text first, outside the firework frame
+     
         draw_success_text(frame, neon_color, grey_blend_color);
         
-        // Add spacing and then render fireworks starting from row 3
+    
         int firework_offset_y = 3;
         
         int active_count = 0;
@@ -126,7 +124,7 @@ int main() {
             }
             
             if (p[i].state == LAUNCH) {
-                // Trail sparkles
+              
                 if (frame % 2 == 0) {
                     int t = find_slot(p);
                     if (t != -1) {
@@ -142,7 +140,7 @@ int main() {
                 
                 p[i].x += p[i].vx;
                 p[i].y += p[i].vy;
-                p[i].vy += 0.02; // Slight gravity
+                p[i].vy += 0.02; 
                 p[i].life--;
                 
                 if (p[i].life <= 0 || p[i].y < HEIGHT / 3) {
@@ -151,7 +149,7 @@ int main() {
                     p[i].state = INACTIVE;
                     exploded = 1;
                     
-                    // Create explosion - 200-300 particles
+                
                     int count = 200 + rand() % 100;
                     for (int j = 0; j < count; j++) {
                         int s = find_slot(p);
@@ -160,15 +158,15 @@ int main() {
                             p[s].x = cx;
                             p[s].y = cy;
                             
-                            // Random angle for spherical explosion
+                  
                             float angle = ((float)rand() / RAND_MAX) * 2.0 * M_PI;
                             float speed = ((float)rand() / RAND_MAX) * 1.2 + 0.3;
                             
-                            // Aspect ratio correction
+                      
                             p[s].vx = cos(angle) * speed;
                             p[s].vy = sin(angle) * speed * 0.5;
                             
-                            p[s].life = p[s].max_life = 60 + rand() % 50; // Increased from 45+35
+                            p[s].life = p[s].max_life = 60 + rand() % 50; 
                             p[s].symbol = sparkle_symbols[rand() % 10];
                             p[s].color = colors[rand() % 10];
                         }
@@ -183,8 +181,8 @@ int main() {
                 p[i].x += p[i].vx;
                 p[i].y += p[i].vy;
                 
-                // Physics - gravity and drag (reduced gravity for slower fall)
-                p[i].vy += 0.02; // Reduced from 0.035
+              
+                p[i].vy += 0.02; 
                 p[i].vx *= 0.98;
                 p[i].vy *= 0.98;
                 
@@ -195,27 +193,26 @@ int main() {
                 } else {
                     move_cursor((int)p[i].x, (int)p[i].y + firework_offset_y);
                     
-                    // Dramatic color fade with sparkle effect
+                  
                     float life_ratio = (float)p[i].life / p[i].max_life;
                     
                     if (life_ratio > 0.8) {
-                        // Bright white sparkle at peak
                         set_color(231);
                         putchar('*');
                     } else if (life_ratio > 0.6) {
-                        // Full color
+                      
                         set_color(p[i].color);
                         putchar(p[i].symbol);
                     } else if (life_ratio > 0.4) {
-                        // Start fading
+                     
                         set_color(colors[7]);
                         putchar(p[i].symbol);
                     } else if (life_ratio > 0.2) {
-                        // Dimmer
+                     
                         set_color(250);
                         putchar('.');
                     } else {
-                        // Final embers
+                      
                         set_color(240);
                         putchar('.');
                     }
@@ -236,12 +233,12 @@ int main() {
         }
         
         fflush(stdout);
-        usleep(50000); // Slowed down from 30000
+        usleep(50000); 
         frame++;
         
-        // Exit when explosion is done and all particles are gone
+     
         if (exploded && active_count == 0) {
-            usleep(500000); // Half second pause to appreciate
+            usleep(500000); 
             break;
         }
     }

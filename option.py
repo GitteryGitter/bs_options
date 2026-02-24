@@ -99,12 +99,18 @@ class Option:
             return - S * M * np.exp(- R * M) * norm.cdf(-d2)
             
         
-    def price(self) -> float:
+    def price(self, alt_vol:float = None) -> float:
         """Computes the Black-Scholes option price"""
         U, S, M, R, V, q = self.get_params()
+
         d1 = self.d1()
         d2 = d1 - V * np.sqrt(M)
-        
+
+        if alt_vol != None:
+            V = alt_vol
+            d1 = (np.log( U / S ) + ( R - q + 0.5 * V ** 2 ) * M ) / ( V * np.sqrt(M))
+            d2 = d1 - V * np.sqrt(M)
+
         if self.call:
             return U * np.exp(-q * M) * norm.cdf(d1) - S * np.exp(-R * M) * norm.cdf(d2)
         else:
@@ -254,11 +260,16 @@ class Option:
         return (X, Y, z)
 
 
-    def implied_volatility(self) -> float:
+    def implied_volatility(self, mp:float) -> float:
         """
-        Computes the implied volatility
+        Computes the implied volatility based on the observed market price, which needs to be passed as mp.
         """
-        pass
+        from scipy.optimize import brentq
+        def objective(try_vol):
+            return self.price(alt_vol=try_vol) - mp
+        
+        return brentq(objective, 1e-6, 5.0)
+
 
     
     def get_info(self) -> None:
@@ -336,5 +347,3 @@ if __name__ == "__main__":
     plot_data = option1.plot_3d(xax = "U", yax = "S", zax="gamma")
 
     make_plot(data = plot_data, xlab = "Underlying price", ylab = "Time to maturity", zlab = "Delta")
-
-

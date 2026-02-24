@@ -59,5 +59,3 @@ print(f"\n\nIt took {end - start:.4f} seconds to run {simuls} simulations.\nThe 
 
 # It took 9.0580 seconds to run 1200000 simulations.
 # The numpy array is 1153.5645 MB in size using float32.
-
-

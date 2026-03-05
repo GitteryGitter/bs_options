@@ -6,7 +6,7 @@
 
 #define WIDTH 80
 #define HEIGHT 30
-#define RUN_TIME_SECONDS 5
+#define RUN_TIME_SECONDS 3
 #define WIND -1
 
 const char* charset = " .:-=+*#%@";

@@ -166,7 +166,7 @@ class Option:
             prices = S * np.exp(-R * rem) * norm.cdf(-d2) - paths * np.exp(-q * rem) * norm.cdf(-d1)
             prices[-1, :] = np.maximum(S - paths[-1, :], 0)
 
-        return prices
+        return (paths, prices)
     
 
     def plot_3d(self, xax: str = "M", yax: str = "U", zax: str = "price") -> tuple:

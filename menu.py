@@ -141,7 +141,7 @@ class Menu:
             iv = self.option.implied_volatility(mp)
             print(f"\n  Implied volatility: {iv:.6f}  ({iv * 100:.4f} %)")
         except ValueError as e:
-            print(f"\n  ✗  Could not find implied volatility: {e}")
+            print(f"\n  ✗  Could not find implied volatility")
         pause()
 
     def _simulation(self) -> None:

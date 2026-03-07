@@ -268,7 +268,7 @@ class Option:
         def objective(try_vol):
             return self.price(alt_vol=try_vol) - mp
         
-        return brentq(objective, 1e-6, 5.0)
+        return brentq(objective, 1e-6, 25.0)
 
 
     

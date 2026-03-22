@@ -75,6 +75,16 @@ class Menu:
     def _select_option(self):
         clear()
         header("Option selector")
+        width = 62
+        print(f"  {'    '} {'Name':<18} {'Type':<6} {'Underlying':>11} {'Strike':>9} {'Maturity':>9}")
+        print(f"  {'─' * width}")
+        for i, (key, opt) in enumerate(self.options.items(), 1):
+            marker = " ◄" if self.option and opt.name == self.option.name else ""
+            op_type = "Call" if opt.call else "Put"
+            print(f"  {i:<4} {key:<18} {op_type:<6} {opt.under:>11.2f} {opt.strike:>9.2f} {opt.mat:>9.2f}{marker}")
+        print()
+        
+
         name = prompt_str("Which option would you like to select?  ")
         try:
             self.option = self.options[name]
@@ -179,26 +189,103 @@ class Menu:
         try:
             import matplotlib.pyplot as plt
             import numpy as np
+            from scipy.stats import gaussian_kde
+            from scipy.integrate import cumulative_trapezoid
 
-            fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+            last_under = under[-1, :] # final values are the prices of the underlying at the time of maturity
+            x = np.asarray(last_under)  
+            
+            kde = gaussian_kde(x)
+            
+            x_grid = np.linspace(x.min(), x.max(), 1000)
+            pdf = kde(x_grid)
+
+            cdf = cumulative_trapezoid(pdf, x_grid, initial=0)
+            
+            def kde_quantile(q, x_grid, cdf):
+            
+                return np.interp(q, cdf, x_grid)
+            
+            q5 = kde_quantile(0.05, x_grid, cdf)
+            q10 = kde_quantile(0.1, x_grid, cdf)
+            q90 = kde_quantile(0.9, x_grid, cdf)
+            q95 = kde_quantile(0.95, x_grid, cdf)
+            
+            fig, axes = plt.subplots(2, 2, figsize=(13, 9))
 
             # Underlying paths
-            ax1 = axes[0]
+            ax1 = axes[0][0]
             ax1.plot(under, alpha=0.4, linewidth=0.5, c = 'grey')
             ax1.set_title("Simulated Underlying Paths")
             ax1.set_xlabel("Time step")
             ax1.set_ylabel("Price")
 
             # Option price paths
-            ax2 = axes[1]
+            ax2 = axes[0][1]
             ax2.plot(prices, alpha=0.4, linewidth=0.5, c = 'grey')
             ax2.set_title("Simulated Option Price Paths")
             ax2.set_xlabel("Time step")
             ax2.set_ylabel("Option Price")
 
+            ax3 = axes[1][0]
+            ax3.hist(x, bins=60, density=True, alpha=0.4, label="Histogram")
+            ax3.plot(x_grid, pdf, lw=2, label="KDE")
+            
+            ymin, ymax = ax3.get_ylim()
+            ax3.axvline(x = q5, ymin = ymin, ymax = kde(q5)[0]/ ymax, c = 'black', linestyle = '--', label = f'Lower 5%: {q5:.2f}')
+            ax3.axvline(x = q10, ymin = ymin, ymax = kde(q10)[0]/ ymax, c = 'red', linestyle = '--', label = f'Lower 10%: {q10:.2f}')
+            ax3.axvline(x = q90, ymin = ymin, ymax = kde(q90)[0]/ ymax, c = 'blue', linestyle = '--', label = f'Upper 10%: {q90:.2f}')
+            ax3.axvline(x = q95, ymin = ymin, ymax = kde(q95)[0]/ ymax, c = 'green', linestyle = '--', label = f'Upper 5%: {q95:.2f}')
+            ax3.legend()
+            ax3.set_xlabel("Prices at time of maturity")
+            ax3.set_ylabel("Density")
+            ax3.set_title(f"The distibution of the final underlying values")
+
+            # ── 4th graph: ITM / ATM / OTM scenario analysis ──────
+            last_prices = prices[-1, :] # final values are the prices of the underlying at the time of maturity
+
+            q90, q95 = np.percentile(prices, [90, 95])
+
+            ITM = np.mean(last_prices >= self.option.price()) * 100
+
+            last_prices = last_prices[last_prices != 0]
+
+            x = np.asarray(last_prices)  
+            
+            kde = gaussian_kde(x)
+            
+            x_grid = np.linspace(x.min(), x.max(), 1000)
+            pdf = kde(x_grid)
+
+            cdf = cumulative_trapezoid(pdf, x_grid, initial=0)
+            
+            def kde_quantile(q, x_grid, cdf):
+            
+                return np.interp(q, cdf, x_grid)
+
+
+            ax4 = axes[1][1]
+            ax4.hist(x, bins=60, density=True, alpha=0.4, label="Histogram")
+            ax4.plot(x_grid, pdf, lw=2, label="KDE")
+            
+            ymin, ymax = ax4.get_ylim()
+            ax4.axvline(x = q90, ymin = ymin, ymax = kde(q90)[0]/ ymax, c = 'blue', linestyle = '--', label = f'Upper 10%: {q90:.2f}')
+            ax4.axvline(x = q95, ymin = ymin, ymax = kde(q95)[0]/ ymax, c = 'green', linestyle = '--', label = f'Upper 5%: {q95:.2f}')
+
+            # kde = np.asarray(kde)
+            ax4.fill_between(x_grid, pdf, 0, where=(x_grid <= float(self.option.price())), color = 'red', alpha=0.3, label="Out of the money")
+            ax4.fill_between(x_grid, pdf, 0, where=(x_grid > float(self.option.price())), color = 'green', alpha=0.3, label=f"In the money ({ITM:.2f}%)")
+
+            ax4.legend()
+            ax4.set_xlabel("Prices at time of maturity")
+            ax4.set_ylabel("Density")
+            ax4.set_title(f"The distibution of the final option prices")
+
             plt.suptitle(f"{self.option.name} — Monte-Carlo Simulation", fontsize=13)
             plt.tight_layout()
             plt.show()
+
+
         except ImportError:
             print("  ✗  matplotlib not available.")
 
